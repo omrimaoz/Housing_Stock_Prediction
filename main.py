@@ -1,38 +1,52 @@
 # imports
+import math
 import pandas as pd
 import numpy as np
 from sklearn import linear_model
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
 
 # Pandas DataFrame manipulation
-def read_data():
-    df = pd.read_csv("tel_aviv_2000_2017.csv") # Load data from csv file
+def read_houses_data(filename):
+    df = pd.read_csv(filename)  # Load data from csv file
 
     # arrange data: rename columns, drop columns and rows
-    columns_name = df.iloc[10:11, :6] # cut specific row contain new names for columns labeling
-    df = df.iloc[11:, :6] # remove unneeded columns and rows
+    columns_name = df.iloc[10:11, :6]  # cut specific row contain new names for columns labeling
+    df = df.iloc[11:, :6]  # remove unneeded columns and rows
     dict = {}
     for i in range(6):
-        dict[df.columns[i]] = columns_name.iloc[0][i] #create dict for rename function
+        dict[df.columns[i]] = columns_name.iloc[0][i]  # create dict for rename function
     df = df.rename(columns=dict).reset_index()
-    df = df.drop(columns=["Yearly Average", "index"]) # drop unneeded columns
+    df = df.drop(columns=["Yearly Average", "index"])  # drop unneeded columns
     df = df.replace(',', '', regex=True)
     return df
 
+
+def read_stock_data(filename):
+    df = pd.read_csv(filename)  # Load data from csv file
+    dates = []
+    for i in range(18):
+        dates += [str(2000 + i) + "-03-01", str(2000 + i) + "-06-01",
+                  str(2000 + i) + "-09-01", str(2000 + i) + "-12-01"]
+    df = df[df['Date'].str.contains("|".join(dates))]
+    return df.SP500
+
+
 # Numpy Matrix-array manipulation
-def array_manipulation(df):
-    arr1 = df.values.astype(np.float64) # convert String DateFrame to Float 2'd array
+def houses_array_manipulation(df):
+    arr1 = df.values.astype(np.float64)  # convert String DateFrame to Float 2'd array
     # arrange data: create rows for quarters of each year, convert values of cost from M to K
     # Takes advantage of numpy array efficient manipulation and calculation
-    quarters = np.array([0,0.25,0.5,0.75], dtype=np.float16)
+    quarters = np.array([0, 0.25, 0.5, 0.75], dtype=np.float16)
 
     # each iteration creating a (2,4) shape array in which the first row contains the yearly quarters and the second
     # row contain the housing cost
     for i in range(arr1.shape[0]):
         arr2 = (np.ones(shape=(2, 4), dtype=np.float16)) * int(arr1[i][4]) + quarters
         if i < 3:
-            arr2[1] = arr1[i][:4]/1000
+            arr2[1] = arr1[i][:4] / 1000
         else:
             arr2[1] = arr1[i][:4]
         if i == 0:
@@ -41,42 +55,108 @@ def array_manipulation(df):
             final = np.concatenate((final, arr2.T), axis=0)  # concatenate current array with previous arrays
     return final.T
 
-def visualization2d(y_axes,x_axes):
+
+def investment_strategy(house_price, stock_price, Hm, Hb, Sm, Sb):
+    # mortgage parameters
+    Startup_capital = house_price / 3  # start-up capital in K
+    loan = 2 * Startup_capital  # first investment = 1/3 and mortgage = 2/3 of investment value
+    N = 20 * 12  # number of payment for the return of the mortgage (months)
+    interest = 0.025 / 12
+    monthly_payment = loan * interest * math.pow((1 + interest), N) / (math.pow((1 + interest), N) - 1)
+    mortgage_interest = monthly_payment * N - loan
+
+    # calculate profit in house and stock in the years 2017 - 2037
+    # assume monthly rent = monthly payment of the mortgage
+    house_profit = np.round(float(Hm * 2037 + Hb - mortgage_interest - Startup_capital), 2)
+    stock_profit = np.round(float(Sm * 2037 + Sb - Startup_capital), 2)
+    house_return = np.round(100 * (house_profit / Startup_capital), 2)  # percentage
+    stock_return = np.round(100 * (stock_profit / Startup_capital), 2)  # percentage
+
+    return house_profit, stock_profit, house_return, stock_return
+
+
+def visualization2d(x_axes, Hy_axes, Sy_axes, Hm, Hb, Sm, Sb):
     fig = plt.figure()
-    # Colors = plt.cm.viridis(np.linspace(0, 1, K))
-    # for i in range(K):
-    #     if lst[i].size != 0:
-    #         newMatrix = dataMatrix[lst[i]].T
-    #         x_axes = newMatrix[0]
-    #         y_axes = newMatrix[1]
-    #         plt.scatter(x_axes, y_axes, c=[(Colors[i][0],Colors[i][1],Colors[i][2])] ,label = "cluster " +str(i), alpha = 1)
-    #     else:
-    #         print("In " + alg_name + " ,cluster number " + str(i) + " is empty")
-    plt.scatter(y_axes, x_axes, alpha = 1)
+    plt.scatter(x_axes, Hy_axes, alpha=1, color='royalblue', label="Tel_Aviv Housing Price")
+    plt.scatter(x_axes, Sy_axes, alpha=1, color='firebrick', label="S&P500 1000 Stocks Price")
+    plt.plot((1999, 2019), (Hm * 1999 + Hb, Hm * 2019 + Hb), color='lightseagreen', linestyle='-', linewidth=3,
+             label="Houses-line")
+    plt.plot((1999, 2019), (Sm * 1999 + Sb, Sm * 2019 + Sb), color='deeppink', linestyle='-', linewidth=3,
+             label="Stock-line")
     plt.grid()
-    plt.title("Housing Price X Time")
-    plt.legend() #TODO: remove legend and label
+    plt.xlim(1999, 2019)
+
+    plt.title("TLV Housing/S&P500 1000 Stocks Price over Time")
+    plt.xlabel("Year Of Date")
+    plt.ylabel("1000 Israeli New Shekels")
+    plt.legend()
 
     plt.show()
     return fig
 
+
+def report(Hp, Sp, Hr, Sr):
+    fig = plt.figure()
+    plt.figtext(0.5, 0.5, "TLV Housing and S&P500 stock prediction report:\n\n"
+                          "Prediction profit for investment in housing in TLV\n"
+                          "in 2017 after 20 years is: " + str(Hp) +
+                ".\nThe return percentage is:" + str(Hr) +
+                "%.\n\nPrediction profit for investment in S&P500 stock\n"
+                "with the same start-up capital,\n"
+                "after 20 years is: " + str(Sp) +
+                ".\nThe return percentage is:" + str(Sr) + "%.",
+                horizontalalignment="center",
+                verticalalignment="center",
+                fontsize=16,
+                )
+    return fig
+
+
+def print_pdf(fig1, fig2):
+    pp = PdfPages('Report.pdf')
+    pp.savefig(fig1)
+    pp.savefig(fig2)
+    pp.close()
+
+
 def main():
     # preparing the data: define predictor and response variable
-    tel_aviv = read_data()
-    data_array = array_manipulation(tel_aviv)
-    X_year = data_array[0] # predictor
-    Y_cost = data_array[1] # response
-    # visualization2d(X_year,Y_cost)
+    tel_aviv = read_houses_data("tel_aviv_2000_2017.csv")
+    data_array = houses_array_manipulation(tel_aviv)
+    X_year = data_array[0]  # predictor
+    Y_house = data_array[1]  # response
+
+    Y_sp500 = read_stock_data("S&P500_data.csv")
 
     # split data into train and test, set test to 33% of the whole data
-    x_train, x_test, y_train, y_test = train_test_split(
-        X_year, Y_cost, test_size = 0.33, random_state=42)
+    Hx_train, Hx_test, Hy_train, Hy_test = train_test_split(
+        X_year, Y_house, test_size=0.33, random_state=42)
+
+    Sx_train, Sx_test, Sy_train, Sy_test = train_test_split(
+        X_year, Y_sp500, test_size=0.33, random_state=42)
 
     # create linear regression model and fit the model on the training set
-    linreg = linear_model.LinearRegression()
-    linreg.fit(x_train, y_train)
+    Houses_linreg = linear_model.LinearRegression()
+    Houses_linreg.fit(Hx_train.reshape(-1, 1), Hy_train)
 
+    Stock_linreg = linear_model.LinearRegression()
+    Stock_linreg.fit(Sx_train.reshape(-1, 1), Sy_train)
 
+    Hp, Sp, Hr, Sr = investment_strategy(Y_house[-1], Y_sp500.iloc[-1],
+                                         Houses_linreg.coef_, Houses_linreg.intercept_,
+                                         Stock_linreg.coef_, Stock_linreg.intercept_)
+    # present in a graph
+    fig1 = visualization2d(X_year, Y_house, Y_sp500,
+                           Houses_linreg.coef_, Houses_linreg.intercept_,
+                           Stock_linreg.coef_, Stock_linreg.intercept_)
+
+    # create the prediction report data
+    fig2 = report(Hp, Sp, Hr, Sr)
+
+    # summarize all in a pdf name Report.pdf
+    print_pdf(fig1, fig2)
 
     print("done")
+
+
 main()
