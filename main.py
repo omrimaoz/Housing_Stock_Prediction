@@ -56,7 +56,7 @@ def houses_array_manipulation(df):
     return final.T
 
 
-def investment_strategy(house_price, stock_price, Hm, Hb, Sm, Sb):
+def investment_strategy(house_price, Hm, Hb, Sm, Sb):
     # mortgage parameters
     Startup_capital = house_price / 3  # start-up capital in K
     loan = 2 * Startup_capital  # first investment = 1/3 and mortgage = 2/3 of investment value
@@ -100,11 +100,11 @@ def report(Hp, Sp, Hr, Sr):
     plt.figtext(0.5, 0.5, "TLV Housing and S&P500 stock prediction report:\n\n"
                           "Prediction profit for investment in housing in TLV\n"
                           "in 2017 after 20 years is: " + str(Hp) +
-                ".\nThe return percentage is:" + str(Hr) +
+                "K ₪.\nThe return percentage is: " + str(Hr) +
                 "%.\n\nPrediction profit for investment in S&P500 stock\n"
                 "with the same start-up capital,\n"
                 "after 20 years is: " + str(Sp) +
-                ".\nThe return percentage is:" + str(Sr) + "%.",
+                "K ₪.\nThe return percentage is: " + str(Sr) + "%.",
                 horizontalalignment="center",
                 verticalalignment="center",
                 fontsize=16,
@@ -142,7 +142,7 @@ def main():
     Stock_linreg = linear_model.LinearRegression()
     Stock_linreg.fit(Sx_train.reshape(-1, 1), Sy_train)
 
-    Hp, Sp, Hr, Sr = investment_strategy(Y_house[-1], Y_sp500.iloc[-1],
+    Hp, Sp, Hr, Sr = investment_strategy(Y_house[-1],
                                          Houses_linreg.coef_, Houses_linreg.intercept_,
                                          Stock_linreg.coef_, Stock_linreg.intercept_)
     # present in a graph
