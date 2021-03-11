@@ -98,13 +98,13 @@ def visualization2d(x_axes, Hy_axes, Sy_axes, Hm, Hb, Sm, Sb):
 def report(Hp, Sp, Hr, Sr):
     fig = plt.figure()
     plt.figtext(0.5, 0.5, "TLV Housing and S&P500 stock prediction report:\n\n"
-                          "Prediction profit for investment in housing in TLV\n"
+                          "Profit prediction for investment in housing in TLV\n"
                           "in 2017 after 20 years is: " + str(Hp) +
-                "K ₪.\nThe return percentage is: " + str(Hr) +
-                "%.\n\nPrediction profit for investment in S&P500 stock\n"
+                "K ₪.\nThe return is: " + str(Hr) +
+                "%.\n\n Profit prediction for investment in the S&P500 stock\n"
                 "with the same start-up capital,\n"
                 "after 20 years is: " + str(Sp) +
-                "K ₪.\nThe return percentage is: " + str(Sr) + "%.",
+                "K ₪.\nThe return is: " + str(Sr) + "%.",
                 horizontalalignment="center",
                 verticalalignment="center",
                 fontsize=16,
