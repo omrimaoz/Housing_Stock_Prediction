@@ -1,6 +1,4 @@
 # Housing-prediction
-Housing prediction in Israel integrated through Machine Learning and Python
-
 
 Housing Market and Stock Market Prediction and Analysis
 
