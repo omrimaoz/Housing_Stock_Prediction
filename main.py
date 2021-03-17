@@ -28,6 +28,7 @@ def read_stock_data(filename):
     df = pd.read_csv(filename)  # Load data from csv file
     dates = []
     for i in range(18):
+        # take only sample of each quarter in the year
         dates += [str(2000 + i) + "-03-01", str(2000 + i) + "-06-01",
                   str(2000 + i) + "-09-01", str(2000 + i) + "-12-01"]
     df = df[df['Date'].str.contains("|".join(dates))]
@@ -45,6 +46,7 @@ def houses_array_manipulation(df):
     # row contain the housing cost
     for i in range(arr1.shape[0]):
         arr2 = (np.ones(shape=(2, 4), dtype=np.float16)) * int(arr1[i][4]) + quarters
+        # first 3 rows are in Shekels instead of K-Shekels
         if i < 3:
             arr2[1] = arr1[i][:4] / 1000
         else:
@@ -75,28 +77,36 @@ def investment_strategy(house_price, Hm, Hb, Sm, Sb):
     return house_profit, stock_profit, house_return, stock_return
 
 
-def visualization2d(x_axes, Hy_axes, Sy_axes, Hm, Hb, Sm, Sb):
-    fig = plt.figure()
+def visualization(x_axes, Hy_axes, Sy_axes, Hm, Hb, Sm, Sb):
+    fig = plt.figure() # create a figure to contain all the MATPLOT visualization
+
+    # add dots to graph present each sample of the data
     plt.scatter(x_axes, Hy_axes, alpha=1, color='royalblue', label="Tel_Aviv Housing Price")
     plt.scatter(x_axes, Sy_axes, alpha=1, color='firebrick', label="S&P500 1000 Stocks Price")
+
+    # add Line to graph present the linear regression computed from the AI algorithm
     plt.plot((1999, 2019), (Hm * 1999 + Hb, Hm * 2019 + Hb), color='lightseagreen', linestyle='-', linewidth=3,
              label="Houses-line")
     plt.plot((1999, 2019), (Sm * 1999 + Sb, Sm * 2019 + Sb), color='deeppink', linestyle='-', linewidth=3,
              label="Stock-line")
+
+    # style the graph
     plt.grid()
     plt.xlim(1999, 2019)
 
+    # add text
     plt.title("TLV Housing/S&P500 1000 Stocks Price over Time")
     plt.xlabel("Year Of Date")
     plt.ylabel("1000 Israeli New Shekels")
     plt.legend()
 
-    plt.show()
+    # plt.show() # Hidden as the figure will present in the PDF
     return fig
 
-
 def report(Hp, Sp, Hr, Sr):
-    fig = plt.figure()
+    fig = plt.figure() # create a figure to contain all the MATPLOT visualization
+
+    # create text report
     plt.figtext(0.5, 0.5, "TLV Housing and S&P500 stock prediction report:\n\n"
                           "Profit prediction for investment in housing in TLV\n"
                           "in 2017 after 20 years is: " + str(Hp) +
@@ -111,8 +121,8 @@ def report(Hp, Sp, Hr, Sr):
                 )
     return fig
 
-
 def print_pdf(fig1, fig2):
+    # create PDF and fill it with report figures
     pp = PdfPages('Report.pdf')
     pp.savefig(fig1)
     pp.savefig(fig2)
@@ -146,7 +156,7 @@ def main():
                                          Houses_linreg.coef_, Houses_linreg.intercept_,
                                          Stock_linreg.coef_, Stock_linreg.intercept_)
     # present in a graph
-    fig1 = visualization2d(X_year, Y_house, Y_sp500,
+    fig1 = visualization(X_year, Y_house, Y_sp500,
                            Houses_linreg.coef_, Houses_linreg.intercept_,
                            Stock_linreg.coef_, Stock_linreg.intercept_)
 
@@ -156,7 +166,8 @@ def main():
     # summarize all in a pdf name Report.pdf
     print_pdf(fig1, fig2)
 
-    print("done")
+    print("Report Ready")
 
 
+# program init
 main()
