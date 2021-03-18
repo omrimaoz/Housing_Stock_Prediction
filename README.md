@@ -1,6 +1,6 @@
 # Housing-prediction
 
-Housing Market and Stock Market Prediction and Analysis
+Housing Market and Stock Market Trends Prediction and Analysis
 
 Using Tel Aviv housing market data from Israel Central Bureau of Statistics and S&P 500 real estate historical data.
 
