@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-
+# extract data from the housing market data csv file
 # Pandas DataFrame manipulation
 def read_houses_data(filename):
     df = pd.read_csv(filename)  # Load data from csv file
@@ -23,7 +23,7 @@ def read_houses_data(filename):
     df = df.replace(',', '', regex=True)
     return df
 
-
+# extract data from the stock market data csv file
 def read_stock_data(filename):
     df = pd.read_csv(filename)  # Load data from csv file
     dates = []
@@ -32,18 +32,20 @@ def read_stock_data(filename):
         dates += [str(2000 + i) + "-03-01", str(2000 + i) + "-06-01",
                   str(2000 + i) + "-09-01", str(2000 + i) + "-12-01"]
     df = df[df['Date'].str.contains("|".join(dates))]
-    return df.SP500
+    return df.SP500 # return the series with index tag "SP500"
 
 
 # Numpy Matrix-array manipulation
 def houses_array_manipulation(df):
     arr1 = df.values.astype(np.float64)  # convert String DateFrame to Float 2'd array
+
     # arrange data: create rows for quarters of each year, convert values of cost from M to K
     # Takes advantage of numpy array efficient manipulation and calculation
     quarters = np.array([0, 0.25, 0.5, 0.75], dtype=np.float16)
 
     # each iteration creating a (2,4) shape array in which the first row contains the yearly quarters and the second
     # row contain the housing cost
+    final = np.array([]) # init empty numpy array
     for i in range(arr1.shape[0]):
         arr2 = (np.ones(shape=(2, 4), dtype=np.float16)) * int(arr1[i][4]) + quarters
         # first 3 rows are in Shekels instead of K-Shekels
@@ -57,7 +59,7 @@ def houses_array_manipulation(df):
             final = np.concatenate((final, arr2.T), axis=0)  # concatenate current array with previous arrays
     return final.T
 
-
+# Define investment strategy for 20 years in real-estate and stocks
 def investment_strategy(house_price, Hm, Hb, Sm, Sb):
     # mortgage parameters
     Startup_capital = house_price / 3  # start-up capital in K
@@ -76,9 +78,9 @@ def investment_strategy(house_price, Hm, Hb, Sm, Sb):
 
     return house_profit, stock_profit, house_return, stock_return
 
-
+# Matplotlib visualization tools
 def visualization(x_axes, Hy_axes, Sy_axes, Hm, Hb, Sm, Sb):
-    fig = plt.figure() # create a figure to contain all the MATPLOT visualization
+    fig = plt.figure()  # create a figure to contain all the MATPLOT visualization
 
     # add dots to graph present each sample of the data
     plt.scatter(x_axes, Hy_axes, alpha=1, color='royalblue', label="Tel_Aviv Housing Price")
@@ -103,8 +105,9 @@ def visualization(x_axes, Hy_axes, Sy_axes, Hm, Hb, Sm, Sb):
     # plt.show() # Hidden as the figure will present in the PDF
     return fig
 
+# Matplotlib - write text to matplotlib figure
 def report(Hp, Sp, Hr, Sr):
-    fig = plt.figure() # create a figure to contain all the MATPLOT visualization
+    fig = plt.figure()  # create a figure to contain all the MATPLOT visualization
 
     # create text report
     plt.figtext(0.5, 0.5, "TLV Housing and S&P500 stock prediction report:\n\n"
@@ -121,6 +124,7 @@ def report(Hp, Sp, Hr, Sr):
                 )
     return fig
 
+# Matplotlib - create PDF
 def print_pdf(fig1, fig2):
     # create PDF and fill it with report figures
     pp = PdfPages('Report.pdf')
@@ -128,7 +132,7 @@ def print_pdf(fig1, fig2):
     pp.savefig(fig2)
     pp.close()
 
-
+# Main method to run software
 def main():
     # preparing the data: define predictor and response variable
     tel_aviv = read_houses_data("tel_aviv_2000_2017.csv")
@@ -157,8 +161,8 @@ def main():
                                          Stock_linreg.coef_, Stock_linreg.intercept_)
     # present in a graph
     fig1 = visualization(X_year, Y_house, Y_sp500,
-                           Houses_linreg.coef_, Houses_linreg.intercept_,
-                           Stock_linreg.coef_, Stock_linreg.intercept_)
+                         Houses_linreg.coef_, Houses_linreg.intercept_,
+                         Stock_linreg.coef_, Stock_linreg.intercept_)
 
     # create the prediction report data
     fig2 = report(Hp, Sp, Hr, Sr)
